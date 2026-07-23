@@ -50,6 +50,10 @@ const App = () => {
       setMessageType('success')
       setMessage(`Added ${returnedPerson.name}`)
       setTimeout(() => { setMessage(null) }, 5000)
+    }).catch(error => {
+      setMessageType('error')
+      setMessage(error.response.data.error)
+      setTimeout(() => { setMessage(null) }, 5000)
     })
   }
   const handleDelete = (id, name) => {
