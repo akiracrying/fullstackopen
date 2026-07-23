@@ -1,4 +1,1 @@
-# Fullstackopen
-My fullstackopen submissions, all parts are in one repo
-
-One branch is used - main
+https://fullstackopen-phonebook-backend-6vkb.onrender.com/
