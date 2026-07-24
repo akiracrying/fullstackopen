@@ -2,16 +2,39 @@ const assert = require('node:assert')
 const { test, after, beforeEach, describe } = require('node:test')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+const bcrypt = require('bcrypt')
 const app = require('../app')
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 const api = supertest(app)
 
 beforeEach(async () => {
   await Blog.deleteMany({})
-  await Blog.insertMany(helper.initialBlogs)
+  await User.deleteMany({})
+
+  const passwordHash = await bcrypt.hash('sekret', 10)
+  const user = new User({ username: 'root', passwordHash })
+  await user.save()
+
+  const blogs = helper.initialBlogs.map(blog => ({
+    ...blog,
+    user: user._id,
+  }))
+  const savedBlogs = await Blog.insertMany(blogs)
+
+  user.blogs = savedBlogs.map(blog => blog._id)
+  await user.save()
 })
+
+const tokenFor = async username => {
+  const response = await api
+    .post('/api/login')
+    .send({ username, password: 'sekret' })
+
+  return response.body.token
+}
 
 describe('when there is initially some blogs saved', () => {
   test('blogs are returned as json', async () => {
@@ -43,9 +66,12 @@ describe('addition of a new blog', () => {
       likes: 10,
     }
 
+    const token = await tokenFor('root')
+
     await api
       .post('/api/blogs')
       .send(newBlog)
+      .set('Authorization', `Bearer ${token}`)
       .expect(201)
       .expect('Content-Type', /application\/json/)
 
@@ -63,9 +89,12 @@ describe('addition of a new blog', () => {
       url: 'https://fullstackopen.com/',
     }
 
+    const token = await tokenFor('root')
+
     const response = await api
       .post('/api/blogs')
       .send(newBlog)
+      .set('Authorization', `Bearer ${token}`)
       .expect(201)
 
     assert.strictEqual(response.body.likes, 0)
@@ -78,9 +107,12 @@ describe('addition of a new blog', () => {
       likes: 10,
     }
 
+    const token = await tokenFor('root')
+
     await api
       .post('/api/blogs')
       .send(newBlog)
+      .set('Authorization', `Bearer ${token}`)
       .expect(400)
   })
 
@@ -91,10 +123,27 @@ describe('addition of a new blog', () => {
       likes: 10,
     }
 
+    const token = await tokenFor('root')
+
     await api
       .post('/api/blogs')
       .send(newBlog)
+      .set('Authorization', `Bearer ${token}`)
       .expect(400)
+  })
+
+  test('fails with status code 401 if token is not provided', async () => {
+    const newBlog = {
+      title: 'Blog without token',
+      author: 'Full Stack Open',
+      url: 'https://fullstackopen.com/',
+      likes: 10,
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(401)
   })
 })
 
@@ -103,8 +152,11 @@ describe('deletion of a blog', () => {
     const blogsAtStart = await helper.blogsInDb()
     const blogToDelete = blogsAtStart[0]
 
+    const token = await tokenFor('root')
+
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(204)
 
     const blogsAtEnd = await helper.blogsInDb()
