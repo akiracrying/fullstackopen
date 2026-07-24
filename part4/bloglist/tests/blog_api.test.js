@@ -98,6 +98,40 @@ describe('addition of a new blog', () => {
   })
 })
 
+describe('deletion of a blog', () => {
+  test('succeeds with status code 204', async () => {
+    const blogsAtStart = await helper.blogsInDb()
+    const blogToDelete = blogsAtStart[0]
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .expect(204)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    const ids = blogsAtEnd.map(blog => blog.id)
+
+    assert(!ids.includes(blogToDelete.id))
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
+  })
+})
+
+describe('updating a blog', () => {
+  test('succeeds with valid data', async () => {
+    const blogsAtStart = await helper.blogsInDb()
+    const blogToUpdate = blogsAtStart[0]
+
+    await api
+      .put(`/api/blogs/${blogToUpdate.id}`)
+      .send({ likes: 10 })
+      .expect(200)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    const updatedBlog = blogsAtEnd.find(blog => blog.id === blogToUpdate.id)
+
+    assert.strictEqual(updatedBlog.likes, 10)
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
