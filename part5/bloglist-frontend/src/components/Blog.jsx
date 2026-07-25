@@ -11,9 +11,6 @@ const Blog = ({ blog, updateBlog, removeBlog, user }) => {
     marginBottom: 5,
   }
 
-  const hideWhenVisible = { display: visible ? 'none' : '' }
-  const showWhenVisible = { display: visible ? '' : 'none' }
-
   const addLike = () => {
     updateBlog({
       ...blog,
@@ -29,20 +26,20 @@ const Blog = ({ blog, updateBlog, removeBlog, user }) => {
 
   return (
     <div style={blogStyle}>
-      <div style={hideWhenVisible}>
+      <div className="blog">
         {blog.title} {blog.author}
-        <button onClick={() => setVisible(true)}>view</button>
+        <button onClick={() => setVisible(!visible)}>{visible ? 'hide' : 'view'}</button>
       </div>
-      <div style={showWhenVisible}>
-        {blog.title} {blog.author}
-        <button onClick={() => setVisible(false)}>hide</button>
-        <div>{blog.url}</div>
-        <div>
-          likes {blog.likes} <button onClick={addLike}>like</button>
+      {visible &&
+        <div className="blog-details">
+          <div>{blog.url}</div>
+          <div>
+            likes {blog.likes} <button onClick={addLike}>like</button>
+          </div>
+          <div>{blog.user.name}</div>
+          {blog.user.username === user.username && <button onClick={remove}>remove</button>}
         </div>
-        <div>{blog.user.name}</div>
-        {blog.user.username === user.username && <button onClick={remove}>remove</button>}
-      </div>
+      }
     </div>
   )
 }

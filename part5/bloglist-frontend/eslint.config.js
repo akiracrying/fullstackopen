@@ -29,5 +29,13 @@ export default [
         { allowConstantExport: true }
       ]
     }
+  },
+  {
+    files: ['**/*.test.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.vitest
+      }
+    }
   }
 ]
