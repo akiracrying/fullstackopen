@@ -1,14 +1,14 @@
-import { useState } from 'react'
+import { useParams } from 'react-router-dom'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
 
-const Blog = ({ blog, updateBlog, removeBlog, user }) => {
-  const [visible, setVisible] = useState(false)
+const Blog = ({ blogs, updateBlog, removeBlog, user }) => {
+  const id = useParams().id
+  const blog = blogs.find(blog => blog.id === id)
 
-  const blogStyle = {
-    paddingTop: 10,
-    paddingLeft: 2,
-    border: 'solid',
-    borderWidth: 1,
-    marginBottom: 5,
+  if (!blog) {
+    return null
   }
 
   const addLike = () => {
@@ -25,22 +25,20 @@ const Blog = ({ blog, updateBlog, removeBlog, user }) => {
   }
 
   return (
-    <div style={blogStyle}>
-      <div className="blog">
-        {blog.title} {blog.author}
-        <button onClick={() => setVisible(!visible)}>{visible ? 'hide' : 'view'}</button>
-      </div>
-      {visible &&
-        <div className="blog-details">
-          <div>{blog.url}</div>
-          <div>
-            likes {blog.likes} <button onClick={addLike}>like</button>
-          </div>
-          <div>{blog.user.name}</div>
-          {blog.user.username === user.username && <button onClick={remove}>remove</button>}
+    <Card style={{ marginTop: 10 }}>
+      <CardContent>
+        <h2>{blog.title} {blog.author}</h2>
+        <div>{blog.url}</div>
+        <div>
+          likes {blog.likes}
+          {user && <Button onClick={addLike}>like</Button>}
         </div>
-      }
-    </div>
+        <div>{blog.user.name}</div>
+        {user && blog.user.username === user.username &&
+          <Button onClick={remove}>remove</Button>
+        }
+      </CardContent>
+    </Card>
   )
 }
 
